@@ -48,7 +48,8 @@ flask_tracer = FlaskTracing(tracer, True, app)
 
 @app.route("/")
 def homepage():
-    return render_template("main.html")
+    return "hello trial app"
+    #render_template("main.html")
 
 
 @app.route("/trace")
@@ -58,7 +59,9 @@ def trace():
         return tag.sub("", text)
 
     with tracer.start_span("get-python-jobs") as span:
-        res = requests.get("https://jobs.github.com/positions.json?description=python")
+        res = requests.get("https://api.github.com/users/jayydev/repos") #("https://jobs.github.com/positions.json?description=python")
+        print("print res:")
+        print(res)
         span.log_kv({"event": "get jobs count", "count": len(res.json())})
         span.set_tag("jobs-count", len(res.json()))
 
@@ -66,25 +69,25 @@ def trace():
         for result in res.json():
             jobs = {}
             with tracer.start_span("request-site") as site_span:
-                logger.info(f"Getting website for {result['company']}")
+                logger.info(f"Getting repo for {result['full_name']}")
                 try:
-                    jobs["description"] = remove_tags(result["description"])
-                    jobs["company"] = result["company"]
-                    jobs["company_url"] = result["company_url"]
+                    jobs["description"] = result["description"]
+                    #jobs["company"] = result["company"]
+                    #jobs["company_url"] = result["company_url"]
                     jobs["created_at"] = result["created_at"]
-                    jobs["how_to_apply"] = result["how_to_apply"]
-                    jobs["location"] = result["location"]
-                    jobs["title"] = result["title"]
-                    jobs["type"] = result["type"]
-                    jobs["url"] = result["url"]
+                    #jobs["how_to_apply"] = result["how_to_apply"]
+                    #jobs["location"] = result["location"]                    
+                    jobs["updated_at"] = result["updated_at"]
+                    jobs["title"] = result["name"]
+                    jobs["url"] = result["html_url"]
 
                     jobs_info.append(jobs)
                     site_span.set_tag("http.status_code", res.status_code)
-                    site_span.set_tag("company-site", result["company"])
+                    site_span.set_tag("company-site", result["full_name"])
                 except Exception:
-                    logger.error(f"Unable to get site for {result['company']}")
+                    logger.error(f"Unable to get site for {result['full_name']}")
                     site_span.set_tag("http.status_code", res.status_code)
-                    site_span.set_tag("company-site", result["company"])
+                    site_span.set_tag("company-site", result["full_name"])
 
     return jsonify(jobs_info)
 

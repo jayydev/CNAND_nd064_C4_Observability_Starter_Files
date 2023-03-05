@@ -2,8 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: trial-app
+  annotations:
+    "sidecar.jaegertracing.io/inject": "true"
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: trial
@@ -14,7 +16,7 @@ spec:
     spec:
       containers:
       - name: trial
-        image: ghcr.io/jasonsmithio/trial:v1
+        image: jayjs/trial-app:v1
         ports:
         - containerPort: 8080
 ---
